@@ -1,1 +1,310 @@
-see disk
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Vet an idea" />
+  <title>Vet an idea</title>
+  <style>
+    :root { --bg:#f6efe6; --paper:#fffdf8; --ink:#1d1712; --muted:#6d5e52; --line:#e3d6c7; --accent:#8a3b2a; --ok:#2c5b39; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    body { padding: 18px 16px 28px; max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 28px; margin: 0 0 8px; letter-spacing: -.03em; }
+    h2 { font-size: 20px; margin: 0 0 10px; }
+    p { line-height: 1.45; }
+    .muted { color: var(--muted); }
+    .note, .card, .seed { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin: 0 0 14px; }
+    .note { background: #fff; border-radius: 14px; }
+    .seed { padding: 12px 14px; cursor: pointer; }
+    .seed.on { border-color: var(--accent); }
+    label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 6px; }
+    input[type="text"], textarea {
+      width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 12px;
+      font: inherit; background: #fff; color: var(--ink);
+    }
+    textarea { min-height: 72px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+    .chips label { margin: 0; color: var(--ink); font-size: 14px; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 8px 12px; }
+    .chips input { accent-color: var(--accent); }
+    .btn { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 12px 14px; font: inherit; cursor: pointer; }
+    .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn.wide { width: 100%; margin-top: 8px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+    .step { display: none; }
+    .step.on { display: block; }
+    .ok { color: var(--ok); }
+    .warn { color: var(--accent); }
+    #flags li { margin: 0 0 6px; }
+    #err { display: none; background: #f8e4df; border-radius: 12px; padding: 10px 12px; margin: 0 0 12px; }
+  </style>
+</head>
+<body>
+  <h1>Come up with it. Then kill it or keep it.</h1>
+  <p class="muted">Not the shop form. This one helps you invent a small business idea and see if it survives your real life. Skip anything. It saves on this phone.</p>
+  <div class="note">Open in Safari. First open needs signal. After that, stay on the page if the signal drops.</div>
+  <p id="err" class="warn"></p>
+  <p class="muted" id="net"></p>
+  <div class="row">
+    <button type="button" class="btn" data-go="you">1 You</button>
+    <button type="button" class="btn" data-go="ideas">2 Ideas</button>
+    <button type="button" class="btn" data-go="vet">3 Vet</button>
+    <button type="button" class="btn" data-go="send">4 Send</button>
+  </div>
+  <form id="form">
+    <section class="step on" id="you">
+      <div class="card">
+        <h2>You, not the fantasy version</h2>
+        <label>What are you already good at, or what do people already ask you for?<textarea name="goodAt"></textarea></label>
+        <label>What do you actually have around you right now?<textarea name="aroundYou" placeholder="Skills, stuff, people, a place, a phone"></textarea></label>
+        <label>Hours you can give this in a real week<input type="text" name="hoursWeek" /></label>
+        <label>Cash you can risk without getting stupid<input type="text" name="cashRisk" /></label>
+        <p class="muted">What is true most days</p>
+        <div class="chips" data-group="life">
+          <label><input type="checkbox" value="Spotty WiFi" /> Spotty WiFi</label>
+          <label><input type="checkbox" value="Kids first" /> Kids first</label>
+          <label><input type="checkbox" value="Power / solar" /> Power / solar</label>
+          <label><input type="checkbox" value="Little cash" /> Little cash</label>
+          <label><input type="checkbox" value="Hard to ship" /> Hard to ship</label>
+          <label><input type="checkbox" value="I move around" /> I move around</label>
+          <label><input type="checkbox" value="Keep my face off it" /> Keep my face off it</label>
+        </div>
+        <label>Who already pays for things near you?<textarea name="whoPaysNear"></textarea></label>
+      </div>
+      <button type="button" class="btn primary wide" data-go="ideas">Next — ideas</button>
+    </section>
+    <section class="step" id="ideas">
+      <div class="card">
+        <h2>Make a few raw ideas</h2>
+        <p class="muted">Steal from the prompts. Ugly is fine. Tap one to vet it.</p>
+        <div id="prompts" class="muted"></div>
+        <label>Idea 1<textarea name="idea1"></textarea></label>
+        <label>Idea 2<textarea name="idea2"></textarea></label>
+        <label>Idea 3<textarea name="idea3"></textarea></label>
+        <label>Idea 4<textarea name="idea4"></textarea></label>
+        <label>Idea 5<textarea name="idea5"></textarea></label>
+      </div>
+      <div id="seeds"></div>
+      <button type="button" class="btn primary wide" data-go="vet">Vet the one I tapped</button>
+    </section>
+    <section class="step" id="vet">
+      <div class="card">
+        <h2>Vet this one</h2>
+        <label>The idea being tested<textarea name="chosen"></textarea></label>
+        <label>Who pays you the first time, by name or type — not “everyone”<textarea name="whoPays"></textarea></label>
+        <label>Why would they pay you instead of doing it themselves or using someone else?<textarea name="whyYou"></textarea></label>
+        <label>How does the first money actually arrive?<input type="text" name="firstMoney" placeholder="Cash in hand, transfer, later, I do not know" /></label>
+        <label>Smallest version you could try in 14 days with the life you already have<textarea name="smallest"></textarea></label>
+        <label>What would you have to buy, learn, or wait on before that test?<textarea name="blockers"></textarea></label>
+        <label>What would make you kill this idea?<textarea name="kill"></textarea></label>
+        <p class="muted">Honest checks</p>
+        <div class="chips" data-group="checks">
+          <label><input type="checkbox" value="I can name one person who might pay" /> I can name one person who might pay</label>
+          <label><input type="checkbox" value="I can test it this month" /> I can test it this month</label>
+          <label><input type="checkbox" value="It fits the hours I actually have" /> It fits the hours I actually have</label>
+          <label><input type="checkbox" value="I do not need a website first" /> I do not need a website first</label>
+          <label><input type="checkbox" value="I already have most of what I need" /> I already have most of what I need</label>
+          <label><input type="checkbox" value="This stays off my kids and my private life" /> This stays off my kids and my private life</label>
+          <label><input type="checkbox" value="I am only keeping it because it sounds impressive" /> I am only keeping it because it sounds impressive</label>
+        </div>
+        <h2>Flags</h2>
+        <ul id="flags" class="muted"></ul>
+        <label>Your call<input type="text" name="verdict" placeholder="Kill it / Maybe / Try the small version" /></label>
+        <label>Why<textarea name="verdictWhy"></textarea></label>
+      </div>
+      <button type="button" class="btn wide" data-go="ideas">Back to ideas</button>
+      <button type="button" class="btn primary wide" data-go="send">Save and send</button>
+    </section>
+    <section class="step" id="send">
+      <div class="card">
+        <h2>Save and send</h2>
+        <p class="muted">Nothing leaves this phone unless you send the file.</p>
+        <p id="status" class="ok"></p>
+        <button type="button" class="btn primary wide" id="dl">Save a copy on this phone</button>
+        <button type="button" class="btn wide" id="share">Send the file</button>
+        <button type="button" class="btn wide" id="copy">Copy the answers</button>
+        <button type="button" class="btn wide" id="load">Load a saved copy</button>
+        <input id="file" type="file" accept="application/json,.json" hidden />
+      </div>
+    </section>
+  </form>
+<script>
+(function () {
+  var KEY = "tj-vet-ideas-v1";
+  function $(id) { return document.getElementById(id); }
+  function status(msg) { $("status").textContent = msg || ""; }
+  function net() {
+    $("net").textContent = navigator.onLine ? "Signal looks on." : "No signal. Stay on this page.";
+  }
+  function groupVals(name) {
+    return Array.prototype.map.call(document.querySelectorAll('[data-group="' + name + '"] input:checked'), function (i) { return i.value; });
+  }
+  function setGroup(name, vals) {
+    if (!vals) return;
+    document.querySelectorAll('[data-group="' + name + '"] input').forEach(function (i) {
+      i.checked = vals.indexOf(i.value) !== -1;
+    });
+  }
+  function go(id) {
+    document.querySelectorAll(".step").forEach(function (s) { s.classList.toggle("on", s.id === id); });
+    if (id === "ideas") renderPrompts();
+    if (id === "vet") { pickChosen(); flags(); }
+  }
+  function ideas() {
+    var fd = new FormData($("form"));
+    return [fd.get("idea1"), fd.get("idea2"), fd.get("idea3"), fd.get("idea4"), fd.get("idea5")]
+      .map(function (s) { return (s || "").trim(); })
+      .filter(Boolean);
+  }
+  function renderPrompts() {
+    var fd = new FormData($("form"));
+    var good = fd.get("goodAt") || "what people already ask you for";
+    var around = fd.get("aroundYou") || "what is already in reach";
+    var pays = fd.get("whoPaysNear") || "people near you";
+    function escape(s) {
+      return String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&", "<": "<", ">": ">", '"': """ })[c]; });
+    }
+    $("prompts").innerHTML =
+      "<p>Start from " + escape(good) + ".</p>" +
+      "<p>What could you sell using " + escape(around) + " without a new website?</p>" +
+      "<p>What do " + escape(pays) + " already pay for that you could do a smaller, closer version of?</p>" +
+      "<p>What would still work on a bad-WiFi, kids-first, low-cash week?</p>";
+    var box = $("seeds");
+    box.innerHTML = "";
+    ideas().forEach(function (t, i) {
+      var d = document.createElement("div");
+      d.className = "seed";
+      d.textContent = (i + 1) + ". " + t;
+      d.onclick = function () {
+        document.querySelectorAll(".seed").forEach(function (x) { x.classList.remove("on"); });
+        d.classList.add("on");
+        $("form").chosen.value = t;
+        persist();
+      };
+      box.appendChild(d);
+    });
+  }
+  function pickChosen() {
+    if (!$("form").chosen.value) {
+      var list = ideas();
+      if (list[0]) $("form").chosen.value = list[0];
+    }
+  }
+  function escape(s) {
+    return String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&", "<": "<", ">": ">", '"': """ })[c]; });
+  }
+  function flags() {
+    var fd = new FormData($("form"));
+    var checks = groupVals("checks");
+    var life = groupVals("life");
+    var out = [];
+    if (!(fd.get("whoPays") || "").trim()) out.push("No first customer named. That is a kill until you can name one.");
+    if (!(fd.get("firstMoney") || "").trim()) out.push("No path for the first dollar.");
+    if (!(fd.get("smallest") || "").trim()) out.push("No 14-day test. It is still a daydream.");
+    if (checks.indexOf("I am only keeping it because it sounds impressive") !== -1) out.push("You flagged that this might be for show. Believe that flag.");
+    if (checks.indexOf("I can name one person who might pay") === -1) out.push("You did not check that a real person might pay.");
+    if (checks.indexOf("I can test it this month") === -1) out.push("If it cannot be tested this month, park it.");
+    if (life.indexOf("Spotty WiFi") !== -1 && checks.indexOf("I do not need a website first") === -1)
+      out.push("Spotty WiFi plus a website-first plan will stall.");
+    if (life.indexOf("Little cash") !== -1 && (fd.get("blockers") || "").toLowerCase().indexOf("buy") !== -1)
+      out.push("Little cash and a buy-first blocker. Shrink the test.");
+    if (!out.length) out.push("No automatic kill flags. Your call still has to be honest.");
+    $("flags").innerHTML = out.map(function (x) { return "<li>" + escape(x) + "</li>"; }).join("");
+  }
+  function packet() {
+    var fd = new FormData($("form"));
+    return {
+      type: "vet-ideas",
+      savedAt: new Date().toISOString(),
+      goodAt: fd.get("goodAt") || "",
+      aroundYou: fd.get("aroundYou") || "",
+      hoursWeek: fd.get("hoursWeek") || "",
+      cashRisk: fd.get("cashRisk") || "",
+      life: groupVals("life"),
+      whoPaysNear: fd.get("whoPaysNear") || "",
+      ideas: ideas(),
+      chosen: fd.get("chosen") || "",
+      whoPays: fd.get("whoPays") || "",
+      whyYou: fd.get("whyYou") || "",
+      firstMoney: fd.get("firstMoney") || "",
+      smallest: fd.get("smallest") || "",
+      blockers: fd.get("blockers") || "",
+      kill: fd.get("kill") || "",
+      checks: groupVals("checks"),
+      verdict: fd.get("verdict") || "",
+      verdictWhy: fd.get("verdictWhy") || ""
+    };
+  }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(packet())); status("Saved on this phone."); } catch (e) {}
+  }
+  function restore(data) {
+    if (!data) return;
+    var form = $("form");
+    ["goodAt","aroundYou","hoursWeek","cashRisk","whoPaysNear","chosen","whoPays","whyYou","firstMoney","smallest","blockers","kill","verdict","verdictWhy"].forEach(function (k) {
+      if (form[k] && data[k] != null) form[k].value = data[k];
+    });
+    ["idea1","idea2","idea3","idea4","idea5"].forEach(function (k, i) {
+      form[k].value = (data.ideas && data.ideas[i]) || "";
+    });
+    setGroup("life", data.life);
+    setGroup("checks", data.checks);
+    renderPrompts();
+    flags();
+  }
+  function filename() {
+    var n = (packet().chosen || "idea").replace(/[^\w]+/g, "-").toLowerCase().slice(0, 40);
+    return n + "-vet.json";
+  }
+  function text() { return JSON.stringify(packet(), null, 2); }
+  function downloadPacket() {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text()], { type: "application/json" }));
+    a.download = filename();
+    a.click();
+  }
+  async function sharePacket() {
+    var file = new File([text()], filename(), { type: "application/json" });
+    try {
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ title: "Idea vet", files: [file] });
+        return;
+      }
+      if (navigator.share) { await navigator.share({ title: "Idea vet", text: text().slice(0, 3500) }); return; }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    downloadPacket();
+  }
+  document.querySelectorAll("[data-go]").forEach(function (b) {
+    b.addEventListener("click", function () { persist(); go(b.getAttribute("data-go")); });
+  });
+  $("form").addEventListener("input", function () { persist(); flags(); });
+  $("form").addEventListener("change", function () { persist(); flags(); });
+  $("dl").onclick = downloadPacket;
+  $("share").onclick = sharePacket;
+  $("copy").onclick = function () {
+    if (navigator.clipboard) navigator.clipboard.writeText(text()).then(function () { status("Copied."); }).catch(downloadPacket);
+    else downloadPacket();
+  };
+  $("load").onclick = function () { $("file").click(); };
+  $("file").onchange = function (e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try { restore(JSON.parse(r.result)); persist(); status("Loaded."); }
+      catch (err) { $("err").style.display = "block"; $("err").textContent = "Could not read that file."; }
+    };
+    r.readAsText(f);
+  };
+  window.addEventListener("online", net);
+  window.addEventListener("offline", net);
+  net();
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (saved) restore(JSON.parse(saved));
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
